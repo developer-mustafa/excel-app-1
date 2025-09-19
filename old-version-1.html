@@ -1,0 +1,1467 @@
+<!DOCTYPE html>
+<html lang="bn" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>📊 এক্সেল ফর্মুলা সহায়তা</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Firebase CDN -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+  <!-- MathJax for formula rendering -->
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <!-- jsPDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              500: '#3B82F6',
+              600: '#2563EB',
+            },
+            secondary: {
+              500: '#10B981',
+              600: '#059669',
+            },
+            dark: {
+              800: '#1f2937',
+              900: '#111827'
+            }
+          }
+        }
+      }
+    };
+    
+    // MathJax configuration
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    };
+  </script>
+  <style>
+    .formula-card {
+      transition: all 0.3s ease;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    .formula-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+    }
+    .smooth-transition {
+      transition: all 0.3s ease;
+    }
+    #recaptcha-container {
+      display: inline-block;
+    }
+    .math-tex {
+      font-size: 1.1em;
+      line-height: 1.4;
+    }
+    .scrollbar-thin {
+      scrollbar-width: thin;
+      scrollbar-color: #3B82F6 #f1f1f1;
+    }
+    .scrollbar-thin::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .scrollbar-thin::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+      background: #3B82F6;
+      border-radius: 10px;
+    }
+    .dark .scrollbar-thin::-webkit-scrollbar-track {
+      background: #374151;
+    }
+    .dark .scrollbar-thin::-webkit-scrollbar-thumb {
+      background: #2563EB;
+    }
+    .formula-code {
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+    .copy-btn {
+      transition: all 0.2s ease;
+    }
+    .copy-btn:active {
+      transform: scale(0.95);
+    }
+  </style>
+</head>
+<body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen">
+  <!-- Header -->
+  <header class="sticky top-0 z-40 flex flex-wrap justify-between items-center p-4 shadow-md dark:shadow-gray-700 bg-primary-500 text-white">
+    <div class="flex items-center space-x-2">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+      <h1 class="text-xl font-bold">📊 Excel Formula Guide</h1>
+    </div>
+    <div class="flex items-center space-x-2">
+      <button id="authButton" class="px-3 py-1 bg-white text-primary-500 rounded font-medium hover:bg-gray-100 smooth-transition">লগইন</button>
+      <button id="toggleMode" class="p-2 bg-white/20 rounded-full hover:bg-white/30 smooth-transition">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+        </svg>
+      </button>
+      <button onclick="exportPDF()" class="p-2 bg-white/20 rounded-full hover:bg-white/30 smooth-transition">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+        </svg>
+      </button>
+      <button id="addFormulaBtn" class="p-2 bg-white text-primary-500 rounded-full hover:bg-gray-100 smooth-transition hidden">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Add Formula Modal -->
+  <div id="addFormulaModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-bold">নতুন ফর্মুলা যোগ করুন</h3>
+        <button id="closeModalBtn" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <form id="formulaForm" class="space-y-4">
+        <div>
+          <label for="formulaTitle" class="block text-sm font-medium mb-1">শিরোনাম</label>
+          <input type="text" id="formulaTitle" required class="w-full p-2 rounded border dark:bg-gray-700 dark:border-gray-600">
+        </div>
+        <div>
+          <label for="formulaText" class="block text-sm font-medium mb-1">ফর্মুলা</label>
+          <input type="text" id="formulaText" required class="w-full p-2 rounded border dark:bg-gray-700 dark:border-gray-600 font-mono">
+        </div>
+        <div>
+          <label for="formulaCategory" class="block text-sm font-medium mb-1">ক্যাটাগরি</label>
+          <select id="formulaCategory" required class="w-full p-2 rounded border dark:bg-gray-700 dark:border-gray-600">
+            <option value="Math">গণিত</option>
+            <option value="Logical">লজিক্যাল</option>
+            <option value="Text">টেক্সট</option>
+            <option value="Lookup">লুকআপ</option>
+            <option value="Date">তারিখ</option>
+            <option value="Financial">ফাইনান্সিয়াল</option>
+            <option value="Other">অন্যান্য</option>
+          </select>
+        </div>
+        <div>
+          <label for="formulaDesc" class="block text-sm font-medium mb-1">বিবরণ (ইংরেজি)</label>
+          <textarea id="formulaDesc" rows="2" class="w-full p-2 rounded border dark:bg-gray-700 dark:border-gray-600"></textarea>
+        </div>
+        <div>
+          <label for="formulaDescBn" class="block text-sm font-medium mb-1">বিবরণ (বাংলা)</label>
+          <textarea id="formulaDescBn" rows="2" class="w-full p-2 rounded border dark:bg-gray-700 dark:border-gray-600"></textarea>
+        </div>
+        <div class="flex justify-end space-x-3 pt-2">
+          <button type="button" id="cancelFormulaBtn" class="px-4 py-2 border rounded hover:bg-gray-100 dark:hover:bg-gray-700 smooth-transition">বাতিল</button>
+          <button type="submit" class="px-4 py-2 bg-primary-500 text-white rounded hover:bg-primary-600 smooth-transition">সংরক্ষণ করুন</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Formula Modal -->
+  <div id="formulaModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div class="flex justify-between items-center p-6 border-b dark:border-gray-700">
+        <h3 class="text-lg font-bold" id="formulaModalTitle">ফর্মুলা</h3>
+        <button onclick="document.getElementById('formulaModal').classList.add('hidden')" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="modal-content p-6 overflow-y-auto scrollbar-thin">
+        <!-- Content will be inserted here dynamically -->
+      </div>
+      <div class="p-4 border-t dark:border-gray-700 flex justify-end">
+        <button id="copyFormulaBtn" class="px-4 py-2 bg-primary-500 text-white rounded hover:bg-primary-600 copy-btn">
+          কপি করুন
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auth Modal -->
+  <div id="authModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-bold" id="authModalTitle">লগইন</h3>
+        <button id="closeAuthModalBtn" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div id="authFormContainer">
+        <form id="loginForm" class="space-y-4">
+          <div>
+            <label for="loginEmail" class="block text-sm font-medium mb-1">ইমেইল</label>
+            <input type="email" id="loginEmail" required class="w-full p-2 rounded border dark:bg-gray-700 dark:border-gray-600">
+          </div>
+          <div>
+            <label for="loginPassword" class="block text-sm font-medium mb-1">পাসওয়ার্ড</label>
+            <input type="password" id="loginPassword" required class="w-full p-2 rounded border dark:bg-gray-700 dark:border-gray-600">
+          </div>
+          <div class="flex justify-between items-center">
+            <button type="button" id="showRegisterBtn" class="text-sm text-primary-500 hover:underline">নতুন অ্যাকাউন্ট তৈরি করুন</button>
+            <button type="submit" class="px-4 py-2 bg-primary-500 text-white rounded hover:bg-primary-600 smooth-transition">লগইন</button>
+          </div>
+        </form>
+
+        <form id="registerForm" class="space-y-4 hidden">
+          <div>
+            <label for="registerName" class="block text-sm font-medium mb-1">নাম</label>
+            <input type="text" id="registerName" required class="w-full p-2 rounded border dark:bg-gray-700 dark:border-gray-600">
+          </div>
+          <div>
+            <label for="registerEmail" class="block text-sm font-medium mb-1">ইমেইল</label>
+            <input type="email" id="registerEmail" required class="w-full p-2 rounded border dark:bg-gray-700 dark:border-gray-600">
+          </div>
+          <div>
+            <label for="registerPassword" class="block text-sm font-medium mb-1">পাসওয়ার্ড</label>
+            <input type="password" id="registerPassword" required class="w-full p-2 rounded border dark:bg-gray-700 dark:border-gray-600">
+          </div>
+          <div>
+            <label for="registerConfirmPassword" class="block text-sm font-medium mb-1">পাসওয়ার্ড নিশ্চিত করুন</label>
+            <input type="password" id="registerConfirmPassword" required class="w-full p-2 rounded border dark:bg-gray-700 dark:border-gray-600">
+          </div>
+          <div class="flex justify-between items-center">
+            <button type="button" id="showLoginBtn" class="text-sm text-primary-500 hover:underline">ইতিমধ্যে অ্যাকাউন্ট আছে?</button>
+            <button type="submit" class="px-4 py-2 bg-primary-500 text-white rounded hover:bg-primary-600 smooth-transition">রেজিস্টার</button>
+          </div>
+        </form>
+
+        <div id="phoneAuthForm" class="space-y-4 hidden">
+          <div>
+            <label for="phoneNumber" class="block text-sm font-medium mb-1">ফোন নাম্বার</label>
+            <input type="tel" id="phoneNumber" required class="w-full p-2 rounded border dark:bg-gray-700 dark:border-gray-600" placeholder="+8801XXXXXXXXX">
+          </div>
+          <button id="sendOTPBtn" class="w-full px-4 py-2 bg-primary-500 text-white rounded hover:bg-primary-600 smooth-transition">OTP পাঠান</button>
+          <div class="text-center">
+            <button type="button" id="showEmailLoginBtn" class="text-sm text-primary-500 hover:underline">ইমেইল দিয়ে লগইন করুন</button>
+          </div>
+          <div id="recaptcha-container"></div>
+        </div>
+
+        <div id="otpVerificationForm" class="space-y-4 hidden">
+          <div>
+            <label for="otpCode" class="block text-sm font-medium mb-1">OTP কোড</label>
+            <input type="text" id="otpCode" required class="w-full p-2 rounded border dark:bg-gray-700 dark:border-gray-600" placeholder="6-digit code">
+          </div>
+          <div class="flex justify-between items-center">
+            <button type="button" id="resendOTPBtn" class="text-sm text-primary-500 hover:underline disabled:opacity-50">OTP পুনরায় পাঠান</button>
+            <button id="verifyOTPBtn" class="px-4 py-2 bg-primary-500 text-white rounded hover:bg-primary-600 smooth-transition">যাচাই করুন</button>
+          </div>
+        </div>
+
+        <div class="mt-6">
+          <div class="relative">
+            <div class="absolute inset-0 flex items-center">
+              <div class="w-full border-t border-gray-300 dark:border-gray-600"></div>
+            </div>
+            <div class="relative flex justify-center text-sm">
+              <span class="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">অথবা</span>
+            </div>
+          </div>
+
+          <div class="mt-6 grid grid-cols-2 gap-3">
+            <button id="googleSignInBtn" class="w-full inline-flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 smooth-transition">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12.545 10.239v3.821h5.445c-0.712 2.315-2.647 3.972-5.445 3.972-3.332 0-6.033-2.701-6.033-6.032s2.701-6.032 6.033-6.032c1.498 0 2.866 0.549 3.921 1.453l2.814-2.814c-1.784-1.664-4.153-2.675-6.735-2.675-5.522 0-10 4.479-10 10s4.478 10 10 10c8.396 0 10-7.524 10-10 0-0.668-0.068-1.324-0.182-1.961h-9.818z"/>
+              </svg>
+              <span class="ml-2">Google</span>
+            </button>
+            <button id="phoneSignInBtn" class="w-full inline-flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 smooth-transition">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20 15.5c-1.2 0-2.5-.2-3.6-.6h-.1c-.3 0-.5.1-.7.3l-2.2 2.2c-2.8-1.5-5.2-3.8-6.6-6.6l2.2-2.2c.3-.3.4-.7.2-1-.3-1.1-.5-2.4-.5-3.6 0-.5-.5-1-1-1H4c-.5 0-1 .5-1 1 0 9.4 7.6 17 17 17 .5 0 1-.5 1-1v-3.5c0-.5-.5-1-1-1zM19 12h2c0-5.5-4.5-10-10-10v2c4.4 0 8 3.6 8 8zm-4 0h2c0-3.3-2.7-6-6-6v2c2.2 0 4 1.8 4 4z"/>
+              </svg>
+              <span class="ml-2">ফোন</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard Modal -->
+  <div id="dashboardModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-4xl" style="max-height: 90vh; min-width: 320px;">
+      <button onclick="document.getElementById('dashboardModal').classList.add('hidden')" 
+              class="absolute top-4 right-4 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+
+      <div class="flex flex-col md:flex-row h-full">
+        <div class="bg-gradient-to-br from-primary-500 to-primary-600 dark:from-gray-700 dark:to-gray-800 p-6 text-white md:w-64 flex-shrink-0">
+          <div class="flex flex-col items-center h-full">
+            <div class="relative mb-4">
+              <img id="userPhoto" src="https://ui-avatars.com/api/?name=U&background=3B82F6&color=ffffff" 
+                   alt="User" class="w-20 h-20 rounded-full border-4 border-white/30 shadow-md mx-auto">
+            </div>
+            
+            <h3 id="userName" class="text-lg font-bold mb-1 text-center">User Name</h3>
+            <p id="userEmail" class="text-sm opacity-90 mb-3 text-center">user@example.com</p>
+            <p id="accountCreated" class="text-xs opacity-75 mb-6 text-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Joined <span id="joinDate">MMM YYYY</span>
+            </p>
+            
+            <button id="logoutBtn" class="mt-auto w-full py-2 px-4 bg-white/20 hover:bg-white/30 rounded-lg border border-white/30 flex items-center justify-center transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              Logout
+            </button>
+          </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-6 scrollbar-thin" style="max-height: calc(90vh - 2rem);">
+          <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">Account Settings</h2>
+          
+          <div class="bg-white dark:bg-gray-700 rounded-lg shadow p-4 mb-4">
+            <h3 class="font-medium flex items-center mb-3">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              Profile Information
+            </h3>
+            
+            <form id="profileForm" class="space-y-3">
+              <div>
+                <label class="block text-sm text-gray-600 dark:text-gray-300 mb-1">Full Name</label>
+                <input type="text" id="profileName" class="w-full px-3 py-2 rounded border dark:bg-gray-600 dark:border-gray-500">
+              </div>
+              
+              <div>
+                <label class="block text-sm text-gray-600 dark:text-gray-300 mb-1">Profile Photo</label>
+                <div class="flex items-center space-x-3">
+                  <img id="profilePhotoPreview" src="https://ui-avatars.com/api/?name=U" class="w-10 h-10 rounded-full">
+                  <label class="flex-1">
+                    <div class="px-3 py-1.5 bg-gray-50 dark:bg-gray-600 hover:bg-gray-100 dark:hover:bg-gray-500 border border-gray-300 dark:border-gray-500 rounded cursor-pointer text-center text-sm">
+                      Change Photo
+                      <input type="file" id="profilePhoto" accept="image/*" class="hidden">
+                    </div>
+                  </label>
+                </div>
+              </div>
+              
+              <button type="submit" class="w-full md:w-auto px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded transition-colors">
+                Save Profile
+              </button>
+            </form>
+          </div>
+          
+          <div class="bg-white dark:bg-gray-700 rounded-lg shadow p-4">
+            <h3 class="font-medium flex items-center mb-3">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 012-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              Change Password
+            </h3>
+            
+            <form id="changePasswordForm" class="space-y-3">
+              <div>
+                <label class="block text-sm text-gray-600 dark:text-gray-300 mb-1">Current Password</label>
+                <input type="password" id="currentPassword" class="w-full px-3 py-2 rounded border dark:bg-gray-600 dark:border-gray-500">
+              </div>
+              
+              <div>
+                <label class="block text-sm text-gray-600 dark:text-gray-300 mb-1">New Password</label>
+                <input type="password" id="newPassword" class="w-full px-3 py-2 rounded border dark:bg-gray-600 dark:border-gray-500">
+                <div id="passwordStrength" class="h-1 mt-1 bg-gray-200 rounded-full">
+                  <div class="h-full bg-red-500 w-0"></div>
+                </div>
+              </div>
+              
+              <div>
+                <label class="block text-sm text-gray-600 dark:text-gray-300 mb-1">Confirm Password</label>
+                <input type="password" id="confirmPassword" class="w-full px-3 py-2 rounded border dark:bg-gray-600 dark:border-gray-500">
+              </div>
+              
+              <button type="submit" class="w-full md:w-auto px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded transition-colors">
+                Update Password
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Comtrols -->
+  <div class="p-4 bg-gray-50 dark:bg-gray-800">
+    <div class="max-w-6xl mx-auto flex flex-col md:flex-row gap-4">
+      <div class="relative flex-grow">
+        <input id="searchBox" type="text" placeholder="🔍 ফর্মুলা অনুসন্ধান করুন..." class="w-full p-3 pl-10 rounded-lg border dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 focus:border-transparent" />
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 absolute left-3 top-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      </div>
+      <div class="flex gap-2">
+        <select id="categoryFilter" class="w-full p-3 rounded-lg border dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+          <option value="">সব ক্যাটাগরি</option>
+        </select>
+        <select id="sortFilter" class="w-auto p-3 rounded-lg border dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+          <option value="recent">সাম্প্রতিক</option>
+          <option value="popular">জনপ্রিয়</option>
+          <option value="a-z">A-Z</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Info -->
+  <div id="userInfo" class="px-4 py-2 bg-secondary-500 text-white hidden">
+    <div class="max-w-6xl mx-auto flex justify-between items-center">
+      <span id="welcomeMessage"></span>
+      <button onclick="document.getElementById('dashboardModal').classList.remove('hidden')" class="text-sm hover:underline">ড্যাশবোর্ড</button>
+    </div>
+  </div>
+
+  <!-- Formula List -->
+  <main class="p-4 max-w-6xl mx-auto">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-lg font-semibold" id="resultsTitle">সকল ফর্মুলা</h2>
+      <div class="text-sm text-gray-500 dark:text-gray-400" id="resultsCount">
+        
+      </div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="formulaList"></div>
+    <div id="loadingIndicator" class="text-center py-8">
+      <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-500"></div>
+    </div>
+    <div id="noResults" class="text-center py-8 hidden">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <p class="mt-2 text-gray-500">কোন ফলাফল পাওয়া যায়নি</p>
+    </div>
+  </main>
+
+  <!-- Floating Action Button -->
+  <div class="fixed bottom-6 right-6">
+    <button id="fabAddFormula" class="p-4 bg-primary-500 text-white rounded-full shadow-lg hover:bg-primary-600 smooth-transition flex items-center justify-center hidden">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- Script -->
+  <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyARd-ddfvT2LVlqTvTSon7L_pidB7tB8Bw",
+      authDomain: "excel-app-7748a.firebaseapp.com",
+      projectId: "excel-app-7748a",
+      storageBucket: "excel-app-7748a.appspot.com",
+      messagingSenderId: "373982496248",
+      appId: "1:373982496248:web:21e0ef021d0fa2de30c20d"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+    const storage = firebase.storage();
+
+    // DOM Elements
+    const formulaList = document.getElementById('formulaList');
+    const searchBox = document.getElementById('searchBox');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const sortFilter = document.getElementById('sortFilter');
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const noResults = document.getElementById('noResults');
+    const resultsCount = document.getElementById('resultsCount');
+    const resultsTitle = document.getElementById('resultsTitle');
+    const addFormulaModal = document.getElementById('addFormulaModal');
+    const authModal = document.getElementById('authModal');
+    const authButton = document.getElementById('authButton');
+    const userInfo = document.getElementById('userInfo');
+    const welcomeMessage = document.getElementById('welcomeMessage');
+    const fabAddFormula = document.getElementById('fabAddFormula');
+    const formulaModal = document.getElementById('formulaModal');
+    const dashboardModal = document.getElementById('dashboardModal');
+
+    // Default data
+    const defaultData = [
+      {
+        title: "Sum of Numbers",
+        formula: "=SUM(A1:A10)",
+        description: "Adds numbers in A1 to A10.",
+        description_bn: "A1 থেকে A10 পর্যন্ত সব সংখ্যার যোগফল নির্ণয় করে।",
+        category: "Math",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        views: 100,
+        createdBy: "system"
+      },
+      {
+        title: "Average",
+        formula: "=AVERAGE(B1:B10)",
+        description: "Finds average of values in B1:B10.",
+        description_bn: "B1 থেকে B10 পর্যন্ত গড় নির্ণয় করে।",
+        category: "Math",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        views: 85,
+        createdBy: "system"
+      },
+      {
+        title: "IF Condition",
+        formula: "=IF(A1>10,\"High\",\"Low\")",
+        description: "Checks condition and returns High or Low.",
+        description_bn: "যদি A1 > 10 হয়, তাহলে High, না হলে Low।",
+        category: "Logical",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        views: 120,
+        createdBy: "system"
+      },
+      {
+        title: "Text Join",
+        formula: "=CONCATENATE(A1,B1)",
+        description: "Joins two cells.",
+        description_bn: "A1 এবং B1 এর লেখা একত্র করে।",
+        category: "Text",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        views: 65,
+        createdBy: "system"
+      },
+      {
+        title: "VLOOKUP",
+        formula: "=VLOOKUP(101,A2:B10,2,FALSE)",
+        description: "Finds value in a table.",
+        description_bn: "A2 থেকে B10 এ 101 খুঁজে এবং তার সংশ্লিষ্ট মান দেয়।",
+        category: "Lookup",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        views: 150,
+        createdBy: "system"
+      }
+    ];
+
+    // Initialize app
+    let formulas = [];
+    let categories = [];
+    let currentUser = null;
+    let recaptchaVerifier = null;
+    let confirmationResult = null;
+    let resendTimer = null;
+    let currentFormulaId = null; // Track current formula for modal
+
+    // Initialize default data
+    async function initializeDefaultData() {
+      try {
+        const snapshot = await db.collection('formulas').limit(1).get();
+        if (snapshot.empty) {
+          // Use batch write for better performance
+          const batch = db.batch();
+          
+          defaultData.forEach(formula => {
+            const docRef = db.collection('formulas').doc();
+            batch.set(docRef, formula);
+          });
+          
+          await batch.commit();
+          console.log("Default formulas added successfully");
+        }
+      } catch (error) {
+        console.error("Error initializing default data: ", error);
+      }
+    }
+
+    // Configure recaptcha for phone auth
+    function configureRecaptcha() {
+      recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+        size: 'invisible',
+        callback: () => {
+          // reCAPTCHA solved, proceed with phone auth
+        }
+      });
+    }
+
+    // Phone auth functions
+    async function signInWithPhoneNumber(phoneNumber) {
+      try {
+        const appVerifier = recaptchaVerifier;
+        confirmationResult = await auth.signInWithPhoneNumber(phoneNumber, appVerifier);
+        
+        // Show OTP input form
+        document.getElementById('phoneAuthForm').classList.add('hidden');
+        document.getElementById('otpVerificationForm').classList.remove('hidden');
+        
+        // Start resend timer
+        startResendTimer();
+      } catch (error) {
+        showError(getAuthErrorMessage(error));
+      }
+    }
+
+    async function verifyOTP(otp) {
+      try {
+        await confirmationResult.confirm(otp);
+        showToast('Successfully authenticated!', 'success');
+        closeAuthModal();
+      } catch (error) {
+        showError('Invalid OTP. Please try again.');
+      }
+    }
+
+    function startResendTimer() {
+      if (resendTimer) clearInterval(resendTimer);
+      
+      const resendBtn = document.getElementById('resendOTPBtn');
+      resendBtn.disabled = true;
+      let seconds = 60;
+      
+      resendBtn.textContent = `Resend in ${seconds}s`;
+      
+      resendTimer = setInterval(() => {
+        seconds--;
+        resendBtn.textContent = `Resend in ${seconds}s`;
+        
+        if (seconds <= 0) {
+          clearInterval(resendTimer);
+          resendBtn.disabled = false;
+          resendBtn.textContent = 'Resend OTP';
+        }
+      }, 1000);
+    }
+
+    async function resendOTP() {
+      const phoneNumber = document.getElementById('phoneNumber').value;
+      await signInWithPhoneNumber(phoneNumber);
+    }
+
+    // Google auth
+    async function signInWithGoogle() {
+      try {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        await auth.signInWithPopup(provider);
+        closeAuthModal();
+      } catch (error) {
+        showError(getAuthErrorMessage(error));
+      }
+    }
+
+    // Email/password auth
+    async function loginWithEmail(email, password) {
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+        closeAuthModal();
+      } catch (error) {
+        showError(getAuthErrorMessage(error));
+      }
+    }
+
+    async function registerWithEmail(name, email, password) {
+      try {
+        const { user } = await auth.createUserWithEmailAndPassword(email, password);
+        await user.updateProfile({ displayName: name });
+        
+        // Create user document in Firestore
+        await db.collection('users').doc(user.uid).set({
+          name: name,
+          email: email,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        closeAuthModal();
+        showToast('Registration successful!', 'success');
+      } catch (error) {
+        showError(getAuthErrorMessage(error));
+      }
+    }
+
+    async function changePassword(currentPassword, newPassword) {
+      try {
+        const user = auth.currentUser;
+        const credential = firebase.auth.EmailAuthProvider.credential(
+          user.email, 
+          currentPassword
+        );
+        
+        // Reauthenticate user
+        await user.reauthenticateWithCredential(credential);
+        
+        // Change password
+        await user.updatePassword(newPassword);
+        showToast('Password changed successfully!', 'success');
+        
+        // Clear form
+        document.getElementById('changePasswordForm').reset();
+      } catch (error) {
+        showError(getAuthErrorMessage(error));
+      }
+    }
+
+    // Profile management
+    async function updateProfile(name, photoFile) {
+      try {
+        const user = auth.currentUser;
+        const updates = {};
+        
+        if (name && name !== user.displayName) {
+          updates.displayName = name;
+        }
+        
+        if (photoFile) {
+          // Upload to Firebase Storage
+          const storageRef = storage.ref();
+          const fileRef = storageRef.child(`profile_photos/${user.uid}`);
+          await fileRef.put(photoFile);
+          updates.photoURL = await fileRef.getDownloadURL();
+        }
+        
+        // Update profile
+        await user.updateProfile(updates);
+        
+        // Update Firestore user document
+        await db.collection('users').doc(user.uid).set({
+          name: user.displayName,
+          email: user.email,
+          photoURL: user.photoURL,
+          lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+        
+        showToast('Profile updated successfully!', 'success');
+        updateProfileDisplay();
+      } catch (error) {
+        showError('Failed to update profile. Please try again.');
+      }
+    }
+
+    function updateProfileDisplay() {
+      const user = auth.currentUser;
+      if (!user) return;
+      
+      document.getElementById('userName').textContent = user.displayName || 'User';
+      document.getElementById('userEmail').textContent = user.email || user.phoneNumber || '';
+      
+      const photoURL = user.photoURL || 'https://ui-avatars.com/api/?name=' + 
+                       encodeURIComponent(user.displayName || 'U');
+      document.getElementById('userPhoto').src = photoURL;
+      document.getElementById('profilePhotoPreview').src = photoURL;
+      
+      // Format account creation date
+      const createdAt = new Date(user.metadata.creationTime);
+      document.getElementById('accountCreated').textContent = 
+        `Account created: ${createdAt.toLocaleDateString()}`;
+        
+      // Update welcome message
+      welcomeMessage.textContent = `স্বাগতম, ${user.displayName || user.email || user.phoneNumber}!`;
+    }
+
+    // Formula management
+    async function fetchFormulas() {
+      loadingIndicator.classList.remove('hidden');
+      formulaList.innerHTML = '';
+      
+      try {
+        let query = db.collection('formulas');
+        
+        // Apply category filter if selected
+        if (categoryFilter.value) {
+          query = query.where('category', '==', categoryFilter.value);
+        }
+        
+        // Apply sorting
+        if (sortFilter.value === 'recent') {
+          query = query.orderBy('createdAt', 'desc');
+        } else if (sortFilter.value === 'popular') {
+          query = query.orderBy('views', 'desc');
+        } else if (sortFilter.value === 'a-z') {
+          query = query.orderBy('title');
+        }
+        
+        const snapshot = await query.get();
+        formulas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        // Update categories dropdown
+        updateCategories();
+        
+        // Render formulas
+        renderFormulas(formulas);
+      } catch (error) {
+        console.error("Error fetching formulas: ", error);
+        showError("Failed to load formulas. Please try again.");
+      } finally {
+        loadingIndicator.classList.add('hidden');
+      }
+    }
+
+    function updateCategories() {
+      // Get unique categories from formulas
+      const uniqueCategories = [...new Set(formulas.map(f => f.category))];
+      
+      // Keep the current selection
+      const currentCategory = categoryFilter.value;
+      
+      // Clear and repopulate the dropdown
+      categoryFilter.innerHTML = '<option value="">সব ক্যাটাগরি</option>';
+      uniqueCategories.sort().forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat;
+        option.textContent = cat;
+        categoryFilter.appendChild(option);
+      });
+      
+      // Restore the selection if it still exists
+      if (currentCategory && uniqueCategories.includes(currentCategory)) {
+        categoryFilter.value = currentCategory;
+      }
+    }
+
+    function renderFormulas(formulasToRender) {
+      formulaList.innerHTML = '';
+      
+      if (formulasToRender.length === 0) {
+        noResults.classList.remove('hidden');
+        resultsCount.textContent = '';
+        resultsTitle.textContent = 'কোন ফলাফল পাওয়া যায়নি';
+        return;
+      }
+      
+      noResults.classList.add('hidden');
+      resultsCount.textContent = `${formulasToRender.length} টি ফলাফল`;
+      
+      formulasToRender.forEach(formula => {
+        const isBookmarked = localStorage.getItem(`bookmark_${formula.id}`);
+        const isUserFormula = currentUser && formula.createdBy === currentUser.uid;
+        
+        const formulaCard = document.createElement('div');
+        formulaCard.className = 'bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-md formula-card hover:shadow-lg cursor-pointer border border-gray-200 dark:border-gray-700';
+        formulaCard.dataset.formula = formula.formula;
+        formulaCard.dataset.id = formula.id;
+        
+        // Format date with time
+        const createdAt = formula.createdAt?.toDate();
+        const formattedDate = createdAt ? formatDateTime(createdAt) : '';
+        
+        formulaCard.innerHTML = `
+          <div class="p-5">
+            <div class="flex justify-between items-start">
+              <h3 class="font-bold text-lg mb-1">${formula.title}</h3>
+              <div class="flex space-x-2">
+                ${isUserFormula ? `
+                  <button onclick="event.stopPropagation(); editFormula('${formula.id}')" class="text-gray-500 hover:text-primary-500 smooth-transition" title="Edit">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                  <button onclick="event.stopPropagation(); deleteFormula('${formula.id}')" class="text-gray-500 hover:text-red-500 smooth-transition" title="Delete">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                ` : ''}
+                <button onclick="event.stopPropagation(); toggleBookmark('${formula.id}')" class="text-gray-500 ${isBookmarked ? 'text-yellow-500' : ''} hover:text-yellow-500 smooth-transition" title="${isBookmarked ? 'Bookmarked' : 'Bookmark'}">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="${isBookmarked ? 'currentColor' : 'none'}" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
+            <div class="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-3">
+              <span class="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">${formula.category}</span>
+              <span class="ml-2">${formattedDate}</span>
+              <span class="ml-auto flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                ${formula.views || 0}
+              </span>
+            </div>
+            
+            <p class="text-gray-700 dark:text-gray-300 text-sm mb-2">${formula.description}</p>
+            <p class="text-green-600 dark:text-green-400 text-sm mb-4">${formula.description_bn}</p>
+            
+            <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded">
+              <div class="flex justify-between items-center">
+                <code class="text-primary-500 dark:text-primary-400 font-mono text-sm break-all formula-code">${formula.formula}</code>
+                <button onclick="event.stopPropagation(); copyToClipboard('${formula.formula.replace(/'/g, "\\'")}')" class="ml-2 px-3 py-1 bg-primary-500 text-white text-xs rounded hover:bg-primary-600 smooth-transition copy-btn flex-shrink-0">
+                  কপি
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        formulaCard.addEventListener('click', () => showFormulaModal(formula.formula, formula.id));
+        formulaList.appendChild(formulaCard);
+      });
+      
+      // Render MathJax formulas
+      if (window.MathJax) {
+        MathJax.typesetPromise().catch(console.error);
+      }
+    }
+
+    function showFormulaModal(formula, formulaId = null) {
+      const modal = document.getElementById('formulaModal');
+      const content = modal.querySelector('.modal-content');
+      const title = modal.querySelector('#formulaModalTitle');
+      const copyBtn = modal.querySelector('#copyFormulaBtn');
+      
+      currentFormulaId = formulaId;
+      
+      // Set title
+      if (formulaId) {
+        const formulaObj = formulas.find(f => f.id === formulaId);
+        if (formulaObj) {
+          title.textContent = formulaObj.title;
+        }
+      } else {
+        title.textContent = "ফর্মুলা";
+      }
+      
+      // Increment view count if formulaId is provided
+      if (formulaId) {
+        db.collection('formulas').doc(formulaId).update({
+          views: firebase.firestore.FieldValue.increment(1)
+        });
+      }
+      
+      content.innerHTML = `
+        <div class="p-4">
+          <div class="math-tex overflow-x-auto">$$${formula}$$</div>
+        </div>
+      `;
+      
+      // Update copy button
+      copyBtn.onclick = () => copyToClipboard(formula);
+      
+      modal.classList.remove('hidden');
+      
+      // Render with MathJax
+      if (window.MathJax) {
+        MathJax.typesetPromise([content]).catch(err => {
+          console.error('MathJax rendering error:', err);
+          content.querySelector('.math-tex').textContent = formula;
+        });
+      }
+    }
+
+    async function addFormula(e) {
+      e.preventDefault();
+      
+      const title = document.getElementById('formulaTitle').value;
+      const formula = document.getElementById('formulaText').value;
+      const category = document.getElementById('formulaCategory').value;
+      const description = document.getElementById('formulaDesc').value;
+      const description_bn = document.getElementById('formulaDescBn').value;
+      
+      if (!title || !formula || !category) {
+        showError('Please fill all required fields');
+        return;
+      }
+      
+      try {
+        const newFormula = {
+          title,
+          formula,
+          category,
+          description,
+          description_bn,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          views: 0,
+          createdBy: currentUser ? currentUser.uid : "anonymous"
+        };
+        
+        await db.collection('formulas').add(newFormula);
+        showToast('Formula added successfully!', 'success');
+        closeAddFormulaModal();
+        fetchFormulas();
+      } catch (error) {
+        console.error("Error adding formula: ", error);
+        showError("Failed to add formula. Please try again.");
+      }
+    }
+
+    async function editFormula(formulaId) {
+      const formula = formulas.find(f => f.id === formulaId);
+      if (!formula) return;
+      
+      document.getElementById('formulaTitle').value = formula.title;
+      document.getElementById('formulaText').value = formula.formula;
+      document.getElementById('formulaCategory').value = formula.category;
+      document.getElementById('formulaDesc').value = formula.description || '';
+      document.getElementById('formulaDescBn').value = formula.description_bn || '';
+      
+      // Change modal title and button
+      document.querySelector('#addFormulaModal h3').textContent = 'Edit Formula';
+      const submitBtn = document.querySelector('#addFormulaModal button[type="submit"]');
+      submitBtn.textContent = 'Update';
+      submitBtn.classList.remove('bg-primary-500', 'hover:bg-primary-600');
+      submitBtn.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
+      
+      // Store the formula ID in the form
+      document.getElementById('formulaForm').dataset.editingId = formulaId;
+      
+      openAddFormulaModal();
+    }
+
+    async function updateFormula(e) {
+      e.preventDefault();
+      
+      const formulaId = e.target.dataset.editingId;
+      if (!formulaId) return;
+      
+      const title = document.getElementById('formulaTitle').value;
+      const formula = document.getElementById('formulaText').value;
+      const category = document.getElementById('formulaCategory').value;
+      const description = document.getElementById('formulaDesc').value;
+      const description_bn = document.getElementById('formulaDescBn').value;
+      
+      if (!title || !formula || !category) {
+        showError('Please fill all required fields');
+        return;
+      }
+      
+      try {
+        await db.collection('formulas').doc(formulaId).update({
+          title,
+          formula,
+          category,
+          description,
+          description_bn,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        showToast('Formula updated successfully!', 'success');
+        closeAddFormulaModal();
+        fetchFormulas();
+      } catch (error) {
+        console.error("Error updating formula: ", error);
+        showError("Failed to update formula. Please try again.");
+      }
+    }
+
+    async function deleteFormula(formulaId) {
+      if (!confirm('Are you sure you want to delete this formula?')) return;
+      
+      try {
+        await db.collection('formulas').doc(formulaId).delete();
+        showToast('Formula deleted successfully!', 'success');
+        fetchFormulas();
+      } catch (error) {
+        console.error("Error deleting formula: ", error);
+        showError("Failed to delete formula. Please try again.");
+      }
+    }
+
+    // PDF Export
+    async function exportPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      
+      // Add title
+      doc.setFontSize(20);
+      doc.text('Excel Formula Guide', 105, 15, { align: 'center' });
+      
+      // Add user info if logged in
+      if (currentUser) {
+        doc.setFontSize(12);
+        doc.text(`Generated by: ${currentUser.displayName || currentUser.email}`, 14, 25);
+        doc.text(`Date: ${new Date().toLocaleDateString()}`, 14, 30);
+      }
+      
+      // Add content
+      doc.setFontSize(12);
+      let y = 40;
+      const filtered = searchBox.value ? formulas.filter(f => 
+        f.title.toLowerCase().includes(searchBox.value.toLowerCase()) ||
+        f.formula.toLowerCase().includes(searchBox.value.toLowerCase()) ||
+        (f.description && f.description.toLowerCase().includes(searchBox.value.toLowerCase())) ||
+        (f.description_bn && f.description_bn.toLowerCase().includes(searchBox.value.toLowerCase()))
+      ) : formulas;
+      
+      filtered.forEach((item, index) => {
+        // Add page if needed
+        if (y > 270) {
+          doc.addPage();
+          y = 20;
+        }
+        
+        doc.setFont('helvetica', 'bold');
+        doc.text(`${index + 1}. ${item.title}`, 14, y);
+        doc.setFont('helvetica', 'normal');
+        
+        y += 7;
+        doc.text(`Category: ${item.category}`, 14, y);
+        
+        y += 7;
+        doc.text(`Formula: ${item.formula}`, 14, y);
+        
+        y += 7;
+        doc.text(`Description: ${item.description}`, 14, y);
+        
+        y += 7;
+        doc.text(`বিবরণ: ${item.description_bn}`, 14, y);
+        
+        y += 10;
+      });
+      
+      // Save the PDF
+      doc.save('excel-formulas-guide.pdf');
+      showToast('PDF exported successfully!', 'success');
+    }
+
+    // Utility functions
+    function formatDate(date) {
+      if (!date) return '';
+      return new Intl.DateTimeFormat('bn-BD', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      }).format(date);
+    }
+    
+    function formatDateTime(date) {
+      if (!date) return '';
+      return new Intl.DateTimeFormat('bn-BD', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: true
+      }).format(date);
+    }
+
+    function searchFormulas() {
+      const term = searchBox.value.toLowerCase();
+      if (!term) {
+        renderFormulas(formulas);
+        return;
+      }
+      
+      const filtered = formulas.filter(f => 
+        f.title.toLowerCase().includes(term) ||
+        f.formula.toLowerCase().includes(term) ||
+        (f.description && f.description.toLowerCase().includes(term)) ||
+        (f.description_bn && f.description_bn.toLowerCase().includes(term)) ||
+        f.category.toLowerCase().includes(term)
+      );
+      
+      renderFormulas(filtered);
+    }
+
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('ফর্মুলা কপি হয়েছে!', 'success');
+      });
+    }
+
+    function toggleBookmark(formulaId) {
+      const key = `bookmark_${formulaId}`;
+      if (localStorage.getItem(key)) {
+        localStorage.removeItem(key);
+        showToast('Bookmark removed', 'success');
+      } else {
+        localStorage.setItem(key, 'true');
+        showToast('Bookmark added', 'success');
+      }
+      fetchFormulas(); // Refresh the view
+    }
+
+    function showToast(message, type = 'info') {
+      const toast = document.createElement('div');
+      toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded shadow-lg text-white flex items-center ${
+        type === 'success' ? 'bg-green-500' : 
+        type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+      }`;
+      toast.innerHTML = `
+        ${type === 'success' ? '✓' : type === 'error' ? '✗' : 'ℹ'}
+        <span class="ml-2">${message}</span>
+      `;
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    function showError(message) {
+      showToast(message, 'error');
+    }
+
+    function getAuthErrorMessage(error) {
+      const errorMap = {
+        'auth/invalid-phone-number': 'Invalid phone number format',
+        'auth/missing-verification-code': 'Please enter the verification code',
+        'auth/invalid-verification-code': 'Invalid verification code',
+        'auth/code-expired': 'Verification code expired. Please request a new one',
+        'auth/too-many-requests': 'Too many attempts. Please try again later',
+        'auth/account-exists-with-different-credential': 'Account already exists with different method',
+        'auth/weak-password': 'Password must be at least 6 characters',
+        'auth/email-already-in-use': 'Email already in use',
+        'auth/user-not-found': 'User not found',
+        'auth/wrong-password': 'Incorrect password',
+        'auth/network-request-failed': 'Network error. Please check your connection'
+      };
+      
+      return errorMap[error.code] || error.message || 'An error occurred. Please try again.';
+    }
+
+    // Modal functions
+    function openAddFormulaModal() {
+      addFormulaModal.classList.remove('hidden');
+    }
+
+    function closeAddFormulaModal() {
+      addFormulaModal.classList.add('hidden');
+      document.getElementById('formulaForm').reset();
+      delete document.getElementById('formulaForm').dataset.editingId;
+      document.querySelector('#addFormulaModal h3').textContent = 'নতুন ফর্মুলা যোগ করুন';
+      const submitBtn = document.querySelector('#addFormulaModal button[type="submit"]');
+      submitBtn.textContent = 'সংরক্ষণ করুন';
+      submitBtn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
+      submitBtn.classList.add('bg-primary-500', 'hover:bg-primary-600');
+    }
+
+    function openAuthModal() {
+      authModal.classList.remove('hidden');
+      showLoginForm();
+      configureRecaptcha();
+    }
+
+    function closeAuthModal() {
+      authModal.classList.add('hidden');
+    }
+
+    function showLoginForm() {
+      document.getElementById('loginForm').classList.remove('hidden');
+      document.getElementById('registerForm').classList.add('hidden');
+      document.getElementById('phoneAuthForm').classList.add('hidden');
+      document.getElementById('otpVerificationForm').classList.add('hidden');
+      document.getElementById('authModalTitle').textContent = 'লগইন';
+    }
+
+    function showRegisterForm() {
+      document.getElementById('loginForm').classList.add('hidden');
+      document.getElementById('registerForm').classList.remove('hidden');
+      document.getElementById('phoneAuthForm').classList.add('hidden');
+      document.getElementById('otpVerificationForm').classList.add('hidden');
+      document.getElementById('authModalTitle').textContent = 'রেজিস্টার';
+    }
+
+    function showPhoneAuthForm() {
+      document.getElementById('loginForm').classList.add('hidden');
+      document.getElementById('registerForm').classList.add('hidden');
+      document.getElementById('phoneAuthForm').classList.remove('hidden');
+      document.getElementById('otpVerificationForm').classList.add('hidden');
+      document.getElementById('authModalTitle').textContent = 'ফোন দিয়ে লগইন';
+    }
+
+    // Auth state listener
+    auth.onAuthStateChanged(user => {
+      currentUser = user;
+      
+      if (user) {
+        // User is signed in
+        authButton.textContent = user.displayName || user.email || 'My Account';
+        authButton.classList.remove('bg-white', 'text-primary-500');
+        authButton.classList.add('bg-secondary-500', 'text-white');
+
+        // Eye-catching welcome message with emoji and gradient text
+        welcomeMessage.innerHTML = `
+          <span class="inline-flex items-center font-bold text-lg bg-gradient-to-r from-yellow-400 via-pink-500 to-blue-500 bg-clip-text text-transparent animate-pulse">
+            👋 স্বাগতম, ${user.displayName || user.email || user.phoneNumber}!
+          </span>
+        `;
+        userInfo.classList.remove('hidden');
+        // Show FAB only to logged in users
+        fabAddFormula.classList.remove('hidden');
+        
+        // Load user data
+        updateProfileDisplay();
+      } else {
+        // User is signed out
+        authButton.textContent = 'লগইন';
+        authButton.classList.add('bg-white', 'text-primary-500');
+        authButton.classList.remove('bg-secondary-500', 'text-white');
+        
+        userInfo.classList.add('hidden');
+        
+        // Hide FAB for anonymous users
+        fabAddFormula.classList.add('hidden');
+      }
+    });
+
+    // Event listeners
+    document.addEventListener('DOMContentLoaded', () => {
+      // Formula form
+      document.getElementById('formulaForm').addEventListener('submit', function(e) {
+        if (this.dataset.editingId) {
+          updateFormula(e);
+        } else {
+          addFormula(e);
+        }
+      });
+      
+      // Modal buttons
+      document.getElementById('closeModalBtn').addEventListener('click', closeAddFormulaModal);
+      document.getElementById('cancelFormulaBtn').addEventListener('click', closeAddFormulaModal);
+      document.getElementById('addFormulaBtn').addEventListener('click', openAddFormulaModal);
+      document.getElementById('fabAddFormula').addEventListener('click', openAddFormulaModal);
+      document.getElementById('closeAuthModalBtn').addEventListener('click', closeAuthModal);
+      
+      // Auth forms
+      document.getElementById('loginForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        loginWithEmail(email, password);
+      });
+      
+      document.getElementById('registerForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const name = document.getElementById('registerName').value;
+        const email = document.getElementById('registerEmail').value;
+        const password = document.getElementById('registerPassword').value;
+        const confirmPassword = document.getElementById('registerConfirmPassword').value;
+        
+        if (password !== confirmPassword) {
+          showError('Passwords do not match');
+          return;
+        }
+        
+        registerWithEmail(name, email, password);
+      });
+      
+      // Phone auth
+      document.getElementById('phoneSignInBtn').addEventListener('click', showPhoneAuthForm);
+      document.getElementById('sendOTPBtn').addEventListener('click', function(e) {
+        e.preventDefault();
+        const phoneNumber = document.getElementById('phoneNumber').value;
+        if (!phoneNumber) {
+          showError('Please enter a phone number');
+          return;
+        }
+        signInWithPhoneNumber(phoneNumber);
+      });
+      
+      document.getElementById('verifyOTPBtn').addEventListener('click', function(e) {
+        e.preventDefault();
+        const otp = document.getElementById('otpCode').value;
+        if (!otp || otp.length !== 6) {
+          showError('Please enter a valid 6-digit OTP');
+          return;
+        }
+        verifyOTP(otp);
+      });
+      
+      document.getElementById('resendOTPBtn').addEventListener('click', function(e) {
+        e.preventDefault();
+        resendOTP();
+      });
+      
+      // Google auth
+      document.getElementById('googleSignInBtn').addEventListener('click', signInWithGoogle);
+      
+      // Auth navigation
+      document.getElementById('showRegisterBtn').addEventListener('click', showRegisterForm);
+      document.getElementById('showLoginBtn').addEventListener('click', showLoginForm);
+      document.getElementById('showEmailLoginBtn').addEventListener('click', showLoginForm);
+      document.getElementById('authButton').addEventListener('click', openAuthModal);
+      
+      // Dashboard forms
+      document.getElementById('profileForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const name = document.getElementById('profileName').value;
+        const photoFile = document.getElementById('profilePhoto').files[0];
+        updateProfile(name, photoFile);
+      });
+      
+      // Profile photo preview
+      document.getElementById('profilePhoto').addEventListener('change', function(e) {
+        if (this.files && this.files[0]) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            document.getElementById('profilePhotoPreview').src = e.target.result;
+          }
+          reader.readAsDataURL(this.files[0]);
+        }
+      });
+      
+      document.getElementById('changePasswordForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const currentPassword = document.getElementById('currentPassword').value;
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        
+        if (newPassword !== confirmPassword) {
+          showError('New passwords do not match');
+          return;
+        }
+        
+        changePassword(currentPassword, newPassword);
+      });
+      
+      // Logout
+      document.getElementById('logoutBtn').addEventListener('click', async function() {
+        try {
+          await auth.signOut();
+          dashboardModal.classList.add('hidden');
+          showToast('Successfully logged out', 'success');
+        } catch (error) {
+          showError('Logout failed. Please try again.');
+        }
+      });
+      
+      // Search and filters
+      searchBox.addEventListener('input', searchFormulas);
+      categoryFilter.addEventListener('change', fetchFormulas);
+      sortFilter.addEventListener('change', fetchFormulas);
+      
+      // Dark mode toggle
+      document.getElementById('toggleMode').addEventListener('click', () => {
+        document.documentElement.classList.toggle('dark');
+        localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+      });
+      
+      // Initialize dark mode from localStorage
+      if (localStorage.getItem('theme') === 'dark') {
+        document.documentElement.classList.add('dark');
+      }
+      
+      // Initialize the app
+      (async function init() {
+        await initializeDefaultData();
+        await fetchFormulas();
+      })();
+    });
+
+    // Global functions
+    window.copyToClipboard = copyToClipboard;
+    window.toggleBookmark = toggleBookmark;
+    window.editFormula = editFormula;
+    window.deleteFormula = deleteFormula;
+    window.exportPDF = exportPDF;
+  </script>
+</body>
+</html>
